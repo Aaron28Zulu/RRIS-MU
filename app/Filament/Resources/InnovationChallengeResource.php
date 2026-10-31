@@ -25,7 +25,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 /**
- * Semester calls of the university-wide Vision 2030 Research and Innovation Challenge.
+ * Semester calls of the university-wide Research and Innovation Challenge.
  */
 class InnovationChallengeResource extends Resource
 {
@@ -35,7 +35,7 @@ class InnovationChallengeResource extends Resource
 
     protected static ?string $navigationGroup = 'Research Office';
 
-    protected static ?string $navigationLabel = 'Vision 2030 challenge';
+    protected static ?string $navigationLabel = 'Innovation challenge';
 
     protected static ?string $modelLabel = 'challenge call';
 
@@ -56,7 +56,7 @@ class InnovationChallengeResource extends Resource
                 TextInput::make('title')
                     ->required()
                     ->maxLength(255)
-                    ->default('Mulungushi University Vision 2030 Research and Innovation Challenge')
+                    ->default('Mulungushi University Research and Innovation Challenge')
                     ->columnSpanFull(),
                 TextInput::make('edition')
                     ->required()

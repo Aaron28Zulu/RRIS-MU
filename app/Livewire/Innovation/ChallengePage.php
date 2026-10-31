@@ -21,7 +21,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 
 /**
- * A Vision 2030 challenge call: the brief, the shortlist, and the entry form for students.
+ * A Research and Innovation Challenge call: the brief, the shortlist, and the entry form for students.
  */
 #[Layout('layouts.app')]
 class ChallengePage extends Component
