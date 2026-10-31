@@ -27,7 +27,7 @@ class SaturatedDomainsChart extends ChartWidget
         /** @var GapAggregationRepository $repository */
         $repository = app(GapAggregationRepository::class);
 
-        return $repository->getDomainDistributionChartData(8);
+        return $repository->getDomainDistributionChartData(8, auth()->user()?->oversightSchoolId());
     }
 
     /**

@@ -49,7 +49,7 @@ class SupervisorWorkspaceTest extends TestCase
         $response = $this->actingAs($student)->get('/supervisor');
 
         $response->assertRedirect('/');
-        $response->assertSessionHas('error', 'Access restricted to authorized academic supervisors.');
+        $response->assertSessionHas('error', 'Access restricted to authorized academic staff.');
     }
 
     public function test_authorized_supervisor_can_access_supervisor_portal(): void

@@ -24,7 +24,7 @@ use Illuminate\Support\Str;
 
 /**
  * Thematic areas that research gaps are filed under. Gap analysis adds areas as it reads completed studies;
- * the Research & Innovation Office curates them: adding, renaming and merging near-duplicates.
+ * the Research Office (led by the research director) curates them: adding, renaming and merging near-duplicates.
  */
 class ResearchDomainResource extends Resource
 {
@@ -32,7 +32,7 @@ class ResearchDomainResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
 
-    protected static ?string $navigationGroup = 'Research & Innovation Office';
+    protected static ?string $navigationGroup = 'Research Office';
 
     protected static ?string $navigationLabel = 'Thematic areas';
 

@@ -45,7 +45,7 @@ class ChallengeEntryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-inbox-stack';
 
-    protected static ?string $navigationGroup = 'Research & Innovation Office';
+    protected static ?string $navigationGroup = 'Research Office';
 
     protected static ?string $navigationLabel = 'Challenge entries';
 

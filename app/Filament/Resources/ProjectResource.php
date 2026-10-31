@@ -10,6 +10,7 @@ use App\Enums\UserRole;
 use App\Filament\Resources\ProjectResource\Pages;
 use App\Filament\Tables\Columns\TitleColumn;
 use App\Models\Project;
+use App\Models\User;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\RichEditor;
@@ -40,16 +41,21 @@ class ProjectResource extends Resource
     protected static ?int $navigationSort = 1;
 
     /**
-     * Only deans, research directors and administrators see the school-wide register.
+     * Deans see their own school's register; the research director and administrators see every school.
      */
     public static function canViewAny(): bool
     {
         return auth()->user()?->hasOversight() ?? false;
     }
 
+    public static function getNavigationLabel(): string
+    {
+        return auth()->user()?->oversightSchoolId() !== null ? 'School projects' : 'All projects';
+    }
+
     public static function getNavigationBadge(): ?string
     {
-        $awaiting = Project::query()
+        $awaiting = static::getEloquentQuery()
             ->whereIn('status', [ProjectStatus::PROPOSAL_SUBMITTED->value, ProjectStatus::UNDER_REVIEW->value])
             ->count();
 
@@ -76,6 +82,15 @@ class ProjectResource extends Resource
                     ->searchable()
                     ->required(),
 
+                Select::make('school_id')
+                    ->label('School')
+                    ->relationship('school', 'name')
+                    ->preload()
+                    // A dean files work under their own school only.
+                    ->disabled(fn (): bool => auth()->user()?->oversightSchoolId() !== null)
+                    ->dehydrated(fn (): bool => auth()->user()?->oversightSchoolId() === null)
+                    ->placeholder('Follows the student\'s school'),
+
                 Select::make('status')
                     ->options(collect(ProjectStatus::cases())->mapWithKeys(
                         fn (ProjectStatus $s) => [$s->value => $s->label()]
@@ -83,7 +98,7 @@ class ProjectResource extends Resource
                     ->required(),
 
                 Select::make('student_id')
-                    ->relationship('student', 'name')
+                    ->relationship('student', 'name', fn (Builder $query): Builder => static::limitToOwnSchool($query))
                     ->searchable()
                     ->preload()
                     ->required(),
@@ -112,7 +127,6 @@ class ProjectResource extends Resource
                     ->visible(fn () => auth()->user()?->hasAnyRole([
                         UserRole::ADMIN->value,
                         UserRole::DEAN->value,
-                        UserRole::RESEARCH_DIRECTOR->value,
                         UserRole::SUPERVISOR->value,
                     ])),
 
@@ -123,7 +137,6 @@ class ProjectResource extends Resource
                     ->visible(fn () => auth()->user()?->hasAnyRole([
                         UserRole::ADMIN->value,
                         UserRole::DEAN->value,
-                        UserRole::RESEARCH_DIRECTOR->value,
                         UserRole::SUPERVISOR->value,
                     ])),
             ]),
@@ -144,6 +157,13 @@ class ProjectResource extends Resource
                     ->tooltip(fn (Project $record): string => $record->category->label())
                     ->color('gray')
                     ->sortable(),
+
+                TextColumn::make('school.name')
+                    ->label('School')
+                    ->formatStateUsing(fn (string $state): string => (string) str($state)->after('School of '))
+                    ->placeholder('Not set')
+                    ->visible(fn (): bool => auth()->user()?->oversightSchoolId() === null)
+                    ->toggleable(),
 
                 TextColumn::make('status')
                     ->badge()
@@ -166,6 +186,11 @@ class ProjectResource extends Resource
                     ->sortable(),
             ])
             ->filters([
+                SelectFilter::make('school_id')
+                    ->label('School')
+                    ->relationship('school', 'name')
+                    ->visible(fn (): bool => auth()->user()?->oversightSchoolId() === null),
+
                 SelectFilter::make('category')
                     ->label('Subject')
                     ->options(ResearchCategory::options()),
@@ -177,7 +202,7 @@ class ProjectResource extends Resource
 
                 SelectFilter::make('completion_year')
                     ->label('Year')
-                    ->options(fn (): array => Project::query()
+                    ->options(fn (): array => static::getEloquentQuery()
                         ->whereNotNull('completion_year')
                         ->distinct()
                         ->orderByDesc('completion_year')
@@ -208,15 +233,35 @@ class ProjectResource extends Resource
         ];
     }
 
+    /**
+     * The research director and administrator see every school; a dean sees only their own school.
+     */
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()->with('school');
         $user = auth()->user();
 
-        if ($user && $user->hasRole(UserRole::SUPERVISOR->value)) {
-            return $query->where('supervisor_id', $user->id);
+        if ($user === null) {
+            return $query->whereRaw('1 = 0');
         }
 
-        return $query;
+        if ($user->hasOversight()) {
+            return $query->withinOversightOf($user);
+        }
+
+        return $query->where('supervisor_id', $user->id);
+    }
+
+    /**
+     * Narrows a people picker to the dean's own school.
+     *
+     * @param  Builder<User>  $query
+     * @return Builder<User>
+     */
+    protected static function limitToOwnSchool(Builder $query): Builder
+    {
+        $schoolId = auth()->user()?->oversightSchoolId();
+
+        return $schoolId === null ? $query : $query->where('school_id', $schoolId);
     }
 }

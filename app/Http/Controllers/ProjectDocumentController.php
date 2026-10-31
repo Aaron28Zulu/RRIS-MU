@@ -60,9 +60,10 @@ class ProjectDocumentController extends Controller
         // Strict ownership & supervisor guard
         $isStudentOwner = $user && $project->student_id === $user->id;
         $isAssignedSupervisor = $user && $project->supervisor_id === $user->id;
-        $isAdmin = $user && $user->hasAnyRole(['admin', 'dean', 'research_director']);
+        // Overseers follow the manuscript rules: deans only for their own school.
+        $isOverseer = $user && $user->hasOversight() && Gate::forUser($user)->allows('downloadFullContent', $project);
 
-        if (! ($isStudentOwner || $isAssignedSupervisor || $isAdmin)) {
+        if (! ($isStudentOwner || $isAssignedSupervisor || $isOverseer)) {
             abort(403, 'Unauthorized to view supervisor evaluation markup.');
         }
 

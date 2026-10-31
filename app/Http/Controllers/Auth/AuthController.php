@@ -96,7 +96,7 @@ class AuthController extends Controller
     }
 
     /**
-     * The landing page for the user's role: the student portal, the lecturer and office workspace, or the archive.
+     * The landing page for the user's role: the student portal, the lecturer portal or repository workspace, or the archive.
      */
     public static function homeFor(User $user): string
     {
@@ -104,7 +104,7 @@ class AuthController extends Controller
             return route('student.dashboard');
         }
 
-        if ($user->isFaculty() || $user->isResearchOfficer()) {
+        if ($user->usesStaffWorkspace()) {
             return '/supervisor';
         }
 

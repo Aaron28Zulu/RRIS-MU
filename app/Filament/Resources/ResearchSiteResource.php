@@ -36,7 +36,7 @@ class ResearchSiteResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-map-pin';
 
-    protected static ?string $navigationGroup = 'Research & Innovation Office';
+    protected static ?string $navigationGroup = 'Research Office';
 
     protected static ?string $navigationLabel = 'Research sites';
 
@@ -66,7 +66,7 @@ class ResearchSiteResource extends Resource
                 Select::make('status')->options(SiteStatus::options())->default(SiteStatus::SETUP->value)->required(),
                 Select::make('coordinator_id')
                     ->label('Coordinator')
-                    ->options(fn (): array => User::role([UserRole::RESEARCH_OFFICER->value, UserRole::SUPERVISOR->value])->pluck('name', 'id')->all())
+                    ->options(fn (): array => User::role([UserRole::RESEARCH_DIRECTOR->value, UserRole::SUPERVISOR->value])->pluck('name', 'id')->all())
                     ->searchable(),
                 DatePicker::make('started_on')->label('Data collection starts')->native(false),
                 DatePicker::make('ends_on')->label('Data collection ends')->native(false)->afterOrEqual('started_on'),

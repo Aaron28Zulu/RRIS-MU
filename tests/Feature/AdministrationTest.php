@@ -13,11 +13,13 @@ use App\Http\Controllers\Auth\ImpersonationController;
 use App\Models\Project;
 use App\Models\ResearchDomain;
 use App\Models\ResearchGap;
+use App\Models\School;
 use App\Models\User;
 use Database\Seeders\ResearchOfficeSeeder;
 use Database\Seeders\RoleAndUserSeeder;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Livewire\Livewire;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -64,51 +66,57 @@ class AdministrationTest extends TestCase
         Filament::setCurrentPanel(Filament::getPanel('supervisor'));
     }
 
-    public function test_seeded_research_officer_is_office_staff_not_a_student(): void
+    public function test_seeded_accounts_have_no_research_office_role_and_deans_have_schools(): void
     {
         $this->seed([RoleAndUserSeeder::class, ResearchOfficeSeeder::class]);
 
-        $ethel = User::where('email', 'ethel@rris.mu.ac.zm')->firstOrFail();
+        $this->assertDatabaseMissing('roles', ['name' => 'research_officer']);
+        $this->assertSame(8, School::count());
 
-        $this->assertSame(UserRole::RESEARCH_OFFICER, $ethel->role);
-        $this->assertSame([UserRole::RESEARCH_OFFICER->value], $ethel->getRoleNames()->all());
-        $this->assertFalse($ethel->isStudent());
+        foreach (User::role(UserRole::DEAN->value)->get() as $dean) {
+            $this->assertNotNull($dean->school_id, "{$dean->name} has no school");
+        }
 
-        $this->actingAs($ethel)->get(route('student.dashboard'))->assertForbidden();
-        $this->actingAs($ethel)->get('/supervisor')->assertOk()->assertSee('Research &amp; Innovation Office', false)->assertDontSee('Student Researcher');
+        $librarian = User::where('email', 'librarian@rris.mu.ac.zm')->firstOrFail();
+        $this->actingAs($librarian)->get('/supervisor')->assertOk()->assertSee('Repository workspace');
     }
 
-    public function test_office_staff_sign_in_lands_in_the_office_workspace(): void
+    public function test_staff_sign_in_lands_in_the_staff_workspace(): void
     {
-        $officer = $this->makeUser('Ethel Kunda', UserRole::RESEARCH_OFFICER, ['password' => 'secret-pass']);
+        $librarian = $this->makeUser('Mrs. G. Chileshe', UserRole::LIBRARIAN, ['password' => 'secret-pass']);
 
-        $this->post(route('login.attempt'), ['email' => $officer->email, 'password' => 'secret-pass'])
+        $this->post(route('login.attempt'), ['email' => $librarian->email, 'password' => 'secret-pass'])
             ->assertRedirect('/supervisor');
     }
 
-    public function test_repair_migration_moves_existing_office_staff_off_the_student_role(): void
+    public function test_retirement_migration_turns_office_staff_into_research_directors(): void
     {
-        $ethel = $this->makeUser('Ethel Kunda', UserRole::RESEARCHER, ['department' => 'Office of Research and Innovation']);
-        $ethel->assignRole(UserRole::RESEARCH_OFFICER->value);
-        $peter = $this->makeUser('Peter Mwaba', UserRole::RESEARCHER, ['department' => 'Economics']);
-        $peter->assignRole(UserRole::RESEARCH_OFFICER->value);
+        $officerRole = Role::firstOrCreate(['name' => 'research_officer', 'guard_name' => 'web']);
 
-        $migration = require database_path('migrations/2026_10_30_000001_make_office_staff_research_officers.php');
+        $ethel = $this->makeUser('Ethel Kunda', UserRole::RESEARCHER, ['department' => 'Office of Research and Innovation']);
+        $ethel->syncRoles([$officerRole]);
+        DB::table('users')->where('id', $ethel->id)->update(['role' => 'research_officer']);
+
+        $peter = $this->makeUser('Peter Mwaba', UserRole::RESEARCHER);
+        $peter->assignRole($officerRole);
+
+        $migration = require database_path('migrations/2026_10_31_000002_retire_research_office_role_and_add_librarian.php');
         $migration->up();
 
-        $ethel = $ethel->fresh();
-        $this->assertSame(UserRole::RESEARCH_OFFICER, $ethel->role);
-        $this->assertSame([UserRole::RESEARCH_OFFICER->value], $ethel->getRoleNames()->all());
+        $ethel = User::findOrFail($ethel->id);
+        $this->assertSame(UserRole::RESEARCH_DIRECTOR, $ethel->role);
+        $this->assertSame([UserRole::RESEARCH_DIRECTOR->value], $ethel->getRoleNames()->all());
 
-        // A student who serves on the office keeps both roles.
-        $this->assertTrue($peter->fresh()->hasAllRoles([UserRole::RESEARCHER->value, UserRole::RESEARCH_OFFICER->value]));
+        // A student who held it as an extra duty keeps only their student role.
+        $this->assertSame([UserRole::RESEARCHER->value], User::findOrFail($peter->id)->getRoleNames()->all());
+        $this->assertDatabaseMissing('roles', ['name' => 'research_officer']);
     }
 
     public function test_only_the_administrator_manages_users(): void
     {
         $this->actingAs($this->admin)->get('/supervisor/users')->assertOk();
 
-        foreach ([UserRole::DEAN, UserRole::RESEARCH_DIRECTOR, UserRole::SUPERVISOR, UserRole::RESEARCH_OFFICER] as $role) {
+        foreach ([UserRole::DEAN, UserRole::RESEARCH_DIRECTOR, UserRole::SUPERVISOR, UserRole::LIBRARIAN] as $role) {
             $this->actingAs($this->makeUser($role->label(), $role))->get('/supervisor/users')->assertForbidden();
         }
     }
@@ -123,24 +131,25 @@ class AdministrationTest extends TestCase
                 'email' => 'grace@rris.mu.ac.zm',
                 'department' => 'Economics',
                 'password' => 'a-strong-password',
-                'role' => UserRole::RESEARCHER->value,
-                'additional_roles' => [UserRole::RESEARCH_OFFICER->value],
+                'role' => UserRole::SUPERVISOR->value,
+                'additional_roles' => [UserRole::LIBRARIAN->value],
             ])
             ->assertHasNoActionErrors();
 
         $grace = User::where('email', 'grace@rris.mu.ac.zm')->firstOrFail();
-        $this->assertSame(UserRole::RESEARCHER, $grace->role);
-        $this->assertTrue($grace->hasAllRoles([UserRole::RESEARCHER->value, UserRole::RESEARCH_OFFICER->value]));
+        $this->assertSame(UserRole::SUPERVISOR, $grace->role);
+        $this->assertTrue($grace->hasAllRoles([UserRole::SUPERVISOR->value, UserRole::LIBRARIAN->value]));
 
         $this->post(route('logout'));
         $this->post(route('login.attempt'), ['email' => 'grace@rris.mu.ac.zm', 'password' => 'a-strong-password'])
-            ->assertRedirect(route('student.dashboard'));
+            ->assertRedirect('/supervisor');
     }
 
     public function test_administrator_changes_roles_and_extra_duties_are_replaced(): void
     {
         $user = $this->makeUser('Dr. A. Mwale', UserRole::SUPERVISOR);
-        $user->assignRole(UserRole::RESEARCH_OFFICER->value);
+        $user->assignRole(UserRole::LIBRARIAN->value);
+        $school = School::where('slug', 'education')->firstOrFail();
         $this->inPanel($this->admin);
 
         Livewire::test(ManageUsers::class)
@@ -148,12 +157,14 @@ class AdministrationTest extends TestCase
                 'name' => 'Dr. A. Mwale',
                 'email' => $user->email,
                 'role' => UserRole::DEAN->value,
+                'school_id' => $school->id,
                 'additional_roles' => [],
             ])
             ->assertHasNoTableActionErrors();
 
         $user->refresh();
         $this->assertSame(UserRole::DEAN, $user->role);
+        $this->assertSame($school->id, $user->school_id);
         $this->assertSame([UserRole::DEAN->value], $user->getRoleNames()->all());
     }
 
@@ -266,9 +277,9 @@ class AdministrationTest extends TestCase
         $this->assertTrue($student->can('update', $project->fresh()));
     }
 
-    public function test_office_manages_thematic_areas_and_merges_duplicates(): void
+    public function test_research_director_manages_thematic_areas_and_merges_duplicates(): void
     {
-        $officer = $this->makeUser('Ethel Kunda', UserRole::RESEARCH_OFFICER);
+        $officer = $this->makeUser('Prof. E. Banda', UserRole::RESEARCH_DIRECTOR);
         $student = $this->makeUser('Lukundo Bwalya', UserRole::RESEARCHER);
         $project = $this->makeProject($student);
 

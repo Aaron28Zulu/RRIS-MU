@@ -110,14 +110,14 @@ class ChallengePage extends Component
             'attachment_path' => $this->attachment?->store('challenge_entries/'.$this->challenge->id, 'secure_research'),
         ]);
 
-        $officers = User::role(UserRole::RESEARCH_OFFICER->value)->get();
+        $directors = User::role(UserRole::RESEARCH_DIRECTOR->value)->whereNull('deactivated_at')->get();
 
-        if ($officers->isNotEmpty()) {
+        if ($directors->isNotEmpty()) {
             Notification::make()
                 ->title('New challenge entry')
                 ->body("{$student->name} entered '{$entry->title}' into {$this->challenge->edition}.")
                 ->icon('heroicon-o-trophy')
-                ->sendToDatabase($officers);
+                ->sendToDatabase($directors);
         }
 
         $this->reset(['title', 'entry_type', 'category', 'problem_statement', 'proposed_solution', 'expected_impact', 'team_members', 'attachment']);

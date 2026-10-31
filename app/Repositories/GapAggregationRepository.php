@@ -21,11 +21,16 @@ class GapAggregationRepository
      *
      * @return Collection<int, ResearchDomain>
      */
-    public function getSaturatedDomains(int $limit = 8): Collection
+    public function getSaturatedDomains(int $limit = 8, ?int $schoolId = null): Collection
     {
         return ResearchDomain::query()
-            ->withCount(['researchGaps as projects_count' => function ($query) {
+            ->withCount(['researchGaps as projects_count' => function ($query) use ($schoolId) {
                 $query->select(DB::raw('count(distinct(project_id))'));
+
+                // Limit the count to one school's studies (a dean's view).
+                if ($schoolId !== null) {
+                    $query->whereHas('project', fn ($projects) => $projects->where('school_id', $schoolId));
+                }
             }])
             ->orderByDesc('projects_count')
             ->limit($limit)
@@ -46,9 +51,9 @@ class GapAggregationRepository
      *     }>
      * }
      */
-    public function getDomainDistributionChartData(int $limit = 8): array
+    public function getDomainDistributionChartData(int $limit = 8, ?int $schoolId = null): array
     {
-        $domains = $this->getSaturatedDomains($limit);
+        $domains = $this->getSaturatedDomains($limit, $schoolId);
 
         $labels = [];
         $data = [];

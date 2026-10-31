@@ -34,18 +34,21 @@ class ResearchOfficeSeeder extends Seeder
             Role::firstOrCreate(['name' => $role->value, 'guard_name' => 'web']);
         }
 
-        $ethel = User::updateOrCreate(['email' => 'ethel@rris.mu.ac.zm'], [
-            'name' => 'Ethel Kunda',
-            'password' => Hash::make('password'),
-            'department' => 'Office of Research and Innovation',
-            'email_verified_at' => now(),
-        ]);
-        // Ethel is office staff, not a student: she gets the office role only.
-        $ethel->assignAccountRoles(UserRole::RESEARCH_OFFICER);
+        // The research director leads the Research Office and coordinates its programmes.
+        $director = User::where('email', 'director@rris.mu.ac.zm')->first();
 
-        // The assistant secretary keeps their student account and gains office duties.
+        if ($director === null) {
+            $director = User::create([
+                'name' => 'Prof. E. Banda',
+                'email' => 'director@rris.mu.ac.zm',
+                'password' => Hash::make('password'),
+                'department' => 'Directorate of Research and Graduate Studies',
+                'email_verified_at' => now(),
+            ]);
+            $director->assignAccountRoles(UserRole::RESEARCH_DIRECTOR);
+        }
+
         $peter = User::where('email', 'peter@rris.mu.ac.zm')->first();
-        $peter?->assignRole(UserRole::RESEARCH_OFFICER->value);
 
         $lukundo = User::where('email', 'lukundo@rris.mu.ac.zm')->first();
         $kelvin = User::where('email', 'kelvin@rris.mu.ac.zm')->first();
@@ -59,7 +62,7 @@ class ResearchOfficeSeeder extends Seeder
             'starts_at' => now()->addDays(10)->setTime(14, 0),
             'capacity' => 150,
             'speaker_slots' => 4,
-            'coordinator_id' => $ethel->id,
+            'coordinator_id' => $director->id,
         ]);
 
         $debate = AssociationEvent::updateOrCreate(['title' => 'Inter-School Research Debate'], [
@@ -70,7 +73,7 @@ class ResearchOfficeSeeder extends Seeder
             'starts_at' => now()->addDays(24)->setTime(15, 30),
             'capacity' => 200,
             'speaker_slots' => 8,
-            'coordinator_id' => $ethel->id,
+            'coordinator_id' => $director->id,
         ]);
 
         if ($lukundo && $kelvin) {
@@ -89,7 +92,7 @@ class ResearchOfficeSeeder extends Seeder
             'opens_on' => now()->subWeek()->toDateString(),
             'closes_on' => now()->addWeeks(3)->toDateString(),
             'presentation_on' => now()->addWeeks(5)->toDateString(),
-            'coordinator_id' => $ethel->id,
+            'coordinator_id' => $director->id,
         ]);
 
         $mutinta = User::where('email', 'mutinta@rris.mu.ac.zm')->first();
@@ -142,7 +145,7 @@ class ResearchOfficeSeeder extends Seeder
             'started_on' => now()->subDays(35)->toDateString(),
             'ends_on' => now()->addDays(85)->toDateString(),
             'objectives' => "Practise conservation agriculture (minimum tillage, mulching) and record growth and pest pressure through the season.\nData supports comparisons with the archive's conservation agriculture studies.",
-            'coordinator_id' => $supervisor?->id ?? $ethel->id,
+            'coordinator_id' => $supervisor?->id ?? $director->id,
             'project_id' => Project::where('title', 'Soil Carbon Stocks Under Agroforestry Versus Continuous Maize Cultivation')->value('id'),
         ]);
 
@@ -156,7 +159,7 @@ class ResearchOfficeSeeder extends Seeder
             'started_on' => now()->subDays(60)->toDateString(),
             'ends_on' => now()->addDays(120)->toDateString(),
             'objectives' => 'Extend the archived borehole study with a full year of monthly data on faecal coliforms, nitrate and pH, so seasonal patterns can be compared.',
-            'coordinator_id' => $rmusonda?->id ?? $ethel->id,
+            'coordinator_id' => $rmusonda?->id ?? $director->id,
         ]);
 
         $classrooms = ResearchSite::updateOrCreate(['name' => 'Partner Schools Reading Study'], [
@@ -168,7 +171,7 @@ class ResearchOfficeSeeder extends Seeder
             'status' => SiteStatus::SETUP,
             'started_on' => now()->addDays(14)->toDateString(),
             'objectives' => 'Collect comparable reading scores from Grade 2 learners for education students\' research on language of instruction.',
-            'coordinator_id' => $nkabwe?->id ?? $ethel->id,
+            'coordinator_id' => $nkabwe?->id ?? $director->id,
             'project_id' => Project::where('title', 'Mother Tongue Instruction and Early Grade Reading Outcomes')->value('id'),
         ]);
 
@@ -182,11 +185,11 @@ class ResearchOfficeSeeder extends Seeder
             'started_on' => now()->subYear()->toDateString(),
             'ends_on' => now()->subDays(20)->toDateString(),
             'objectives' => 'Year-long monitoring of off-grid solar systems to support the engineering department\'s energy access research.',
-            'coordinator_id' => $rmusonda?->id ?? $ethel->id,
+            'coordinator_id' => $rmusonda?->id ?? $director->id,
         ]);
 
-        $recorders = array_values(array_filter([$lukundo, $kelvin, $peter, $ethel]));
-        $sciencesRecorders = array_values(array_filter([$mwila, $peter, $ethel]));
+        $recorders = array_values(array_filter([$lukundo, $kelvin, $peter, $director]));
+        $sciencesRecorders = array_values(array_filter([$mwila, $peter, $director]));
 
         if ($fieldTrial->observations()->doesntExist()) {
             $fieldLog = [

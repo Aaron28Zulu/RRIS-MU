@@ -30,6 +30,7 @@ class Project extends Model
         'title',
         'abstract',
         'category',
+        'school_id',
         'status',
         'similarity_check_status',
         'completion_year',
@@ -51,7 +52,34 @@ class Project extends Model
             'similarity_check_status' => SimilarityCheckStatus::class,
             'category' => ResearchCategory::class,
             'completion_year' => 'integer',
+            'school_id' => 'integer',
         ];
+    }
+
+    /**
+     * New projects are filed under the student's school, or their subject's school when the student
+     * has none recorded.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (Project $project): void {
+            if ($project->school_id !== null) {
+                return;
+            }
+
+            $project->school_id = User::query()->whereKey($project->student_id)->value('school_id')
+                ?? ($project->category instanceof ResearchCategory ? School::bySlug($project->category->schoolSlug())?->id : null);
+        });
+    }
+
+    /**
+     * School the project is registered under.
+     *
+     * @return BelongsTo<School, $this>
+     */
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class);
     }
 
     /**
@@ -175,6 +203,21 @@ class Project extends Model
     }
 
     /**
+     * Limit the register to what the user oversees: one school for a dean, everything for the research
+     * director and administrator.
+     *
+     * @param  Builder<Project>  $query
+     */
+    public function scopeWithinOversightOf(Builder $query, User $user): void
+    {
+        $schoolId = $user->oversightSchoolId();
+
+        if ($schoolId !== null) {
+            $query->where($query->qualifyColumn('school_id'), $schoolId);
+        }
+    }
+
+    /**
      * Completed archive records whose title or abstract share key terms with a proposed title,
      * so students can spot duplicated topics before they submit.
      *
@@ -238,11 +281,11 @@ class Project extends Model
         $year = $this->completion_year ?? 'n.d.';
 
         return sprintf(
-            '%s (%s). %s [Research project]. School of %s, Mulungushi University. Research Repository Interface System.',
+            '%s (%s). %s [Research project]. %s, Mulungushi University. Research Repository Interface System.',
             $author,
             $year,
             $this->title,
-            $this->category->school()
+            $this->school?->name ?? 'School of '.$this->category->school()
         );
     }
 }

@@ -93,13 +93,15 @@ class LecturerPortalTest extends TestCase
 
     public function test_school_wide_register_is_limited_to_oversight_roles(): void
     {
-        $this->makeProject('Any Departmental Study', ProjectStatus::UNDER_SUPERVISION, $this->otherSupervisor);
+        $study = $this->makeProject('Any Departmental Study', ProjectStatus::UNDER_SUPERVISION, $this->otherSupervisor);
 
         $this->actingAs($this->supervisor)
             ->get(ProjectResource::getUrl('index'))
             ->assertForbidden();
 
+        // Deans see their own school's register.
         $dean = $this->makeUser(UserRole::DEAN, 'Dr. M. Phiri');
+        $dean->update(['school_id' => $study->school_id]);
         $this->actingAs($dean);
 
         $this->get(ProjectResource::getUrl('index'))->assertOk();

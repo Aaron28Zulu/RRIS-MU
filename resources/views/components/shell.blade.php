@@ -47,8 +47,8 @@
                 <span class="text-forest-300">Research Repository Interface System</span>
             </p>
             <div class="flex shrink-0 items-center gap-4">
-                @if ($isFaculty || $user?->isResearchOfficer())
-                    <a href="{{ url('/supervisor') }}" class="font-medium text-white hover:underline">{{ $isFaculty ? 'Lecturer portal' : 'Office workspace' }}</a>
+                @if ($user?->usesStaffWorkspace())
+                    <a href="{{ url('/supervisor') }}" class="font-medium text-white hover:underline">{{ $user->workspaceLabel() }}</a>
                 @endif
                 @auth
                     <span class="hidden text-forest-300 md:inline">{{ $user->role?->label() }}</span>
@@ -102,10 +102,8 @@
                             @if ($isStudent)
                                 <a href="{{ route('student.dashboard') }}" class="block px-4 py-2 text-sm text-ink-soft hover:bg-canvas">My research</a>
                             @endif
-                            @if ($isFaculty)
-                                <a href="{{ url('/supervisor') }}" class="block px-4 py-2 text-sm text-ink-soft hover:bg-canvas">Lecturer portal</a>
-                            @elseif ($user->isResearchOfficer())
-                                <a href="{{ url('/supervisor') }}" class="block px-4 py-2 text-sm text-ink-soft hover:bg-canvas">Office workspace</a>
+                            @if ($user->usesStaffWorkspace())
+                                <a href="{{ url('/supervisor') }}" class="block px-4 py-2 text-sm text-ink-soft hover:bg-canvas">{{ $user->workspaceLabel() }}</a>
                             @endif
                             <a href="{{ route('folder') }}" class="block px-4 py-2 text-sm text-ink-soft hover:bg-canvas">Saved records</a>
                             <form action="{{ route('logout') }}" method="POST" class="border-t border-line">
