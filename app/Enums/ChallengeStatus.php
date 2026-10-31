@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Enums;
 
 /**
- * Lifecycle of a Vision 2030 Research and Innovation Challenge call.
+ * Lifecycle of a Research and Innovation Challenge call.
  */
 enum ChallengeStatus: string
 {

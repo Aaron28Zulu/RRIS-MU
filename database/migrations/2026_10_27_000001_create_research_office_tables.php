@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Programmes run by the university's Office of Research and Innovation:
- * the Vision 2030 Research and Innovation Challenge, office events such as
+ * the Research and Innovation Challenge, office events such as
  * debates and workshops, and the research sites where students log study data.
  */
 return new class extends Migration
