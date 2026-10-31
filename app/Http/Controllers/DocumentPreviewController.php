@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
-use App\Enums\UserRole;
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -24,24 +24,10 @@ class DocumentPreviewController extends Controller
             abort(401);
         }
 
-        // 1. Authorization Guard:
-        // Academic supervisors may ONLY preview manuscripts belonging to their assigned advisees.
-        if ($user->hasRole(UserRole::SUPERVISOR->value) && $project->supervisor_id !== $user->id) {
-            abort(403, 'Access denied. You may only preview documents belonging to your assigned advisees.');
-        }
-
-        // Student researchers may only preview their own projects; admins/deans have full clearance.
-        if (! $user->hasRole(UserRole::SUPERVISOR->value)) {
-            $isOwner = $project->student_id === $user->id;
-            $isAdmin = $user->hasAnyRole([
-                UserRole::ADMIN->value,
-                UserRole::DEAN->value,
-                UserRole::RESEARCH_DIRECTOR->value,
-            ]);
-
-            if (! ($isOwner || $isAdmin)) {
-                abort(403, 'Unauthorized access to restricted research manuscript.');
-            }
+        // 1. Authorization Guard (ProjectPolicy@viewFullContent): supervisors see only their advisees,
+        // students only their own work, deans only their school; the director, admin and librarians see all.
+        if (Gate::forUser($user)->denies('viewFullContent', $project)) {
+            abort(403, 'Unauthorized access to restricted research manuscript.');
         }
 
         // 2. File Verification:

@@ -33,7 +33,7 @@ class InnovationChallengeResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-trophy';
 
-    protected static ?string $navigationGroup = 'Research & Innovation Office';
+    protected static ?string $navigationGroup = 'Research Office';
 
     protected static ?string $navigationLabel = 'Vision 2030 challenge';
 
@@ -81,8 +81,8 @@ class InnovationChallengeResource extends Resource
                     ->required(),
                 Select::make('coordinator_id')
                     ->label('Coordinator')
-                    ->options(fn (): array => User::role(UserRole::RESEARCH_OFFICER->value)->pluck('name', 'id')->all())
-                    ->default(fn (): ?int => auth()->user()?->isResearchOfficer() ? auth()->id() : null)
+                    ->options(fn (): array => User::role(UserRole::RESEARCH_DIRECTOR->value)->pluck('name', 'id')->all())
+                    ->default(fn (): ?int => auth()->user()?->hasRole(UserRole::RESEARCH_DIRECTOR->value) ? auth()->id() : null)
                     ->searchable(),
                 DatePicker::make('opens_on')->native(false),
                 DatePicker::make('closes_on')->label('Entries close')->native(false)->afterOrEqual('opens_on'),

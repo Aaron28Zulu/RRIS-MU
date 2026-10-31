@@ -48,7 +48,8 @@
                                     ['lukundo@rris.mu.ac.zm', 'Researcher', 'Lukundo Bwalya'],
                                     ['cmulenga@rris.mu.ac.zm', 'Lecturer', 'Dr. C. Mulenga'],
                                     ['dean@rris.mu.ac.zm', 'Dean', 'Dr. M. Phiri'],
-                                    ['ethel@rris.mu.ac.zm', 'Research Office', 'Ethel Kunda'],
+                                    ['director@rris.mu.ac.zm', 'Research Director', 'Prof. E. Banda'],
+                                    ['librarian@rris.mu.ac.zm', 'Librarian', 'Mrs. G. Chileshe'],
                                 ] as [$demoEmail, $demoRole, $demoName])
                                     <a href="{{ route('login.quick', ['email' => $demoEmail]) }}" class="rounded-md border border-line px-3 py-2.5 transition hover:border-forest-400 hover:bg-forest-50">
                                         <span class="block text-sm font-semibold text-ink">{{ $demoRole }}</span>

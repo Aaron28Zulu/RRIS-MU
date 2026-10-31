@@ -9,6 +9,7 @@ use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -31,6 +32,7 @@ class User extends Authenticatable implements FilamentUser
         'password',
         'role',
         'department',
+        'school_id',
     ];
 
     /**
@@ -55,7 +57,18 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'role' => UserRole::class,
             'deactivated_at' => 'datetime',
+            'school_id' => 'integer',
         ];
+    }
+
+    /**
+     * School the person belongs to. A dean's school limits what they can see.
+     *
+     * @return BelongsTo<School, $this>
+     */
+    public function school(): BelongsTo
+    {
+        return $this->belongsTo(School::class);
     }
 
     /**
@@ -124,7 +137,7 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
-     * Whether the user may open the lecturer (Filament) portal.
+     * Whether the user works in the lecturer portal (supervisors, deans, the research director and admins).
      */
     public function isFaculty(): bool
     {
@@ -137,7 +150,8 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
-     * Whether the user holds oversight across the archive (dean, director or admin).
+     * Whether the user holds oversight of a project register: university-wide for the director and admin,
+     * or one school for a dean.
      */
     public function hasOversight(): bool
     {
@@ -149,23 +163,89 @@ class User extends Authenticatable implements FilamentUser
     }
 
     /**
-     * Whether the user sits on the Office of Research and Innovation.
+     * Whether the user sees research from every school: the administrator and the research director.
      */
-    public function isResearchOfficer(): bool
+    public function hasUniversityWideAccess(): bool
     {
-        return $this->hasRole(UserRole::RESEARCH_OFFICER->value);
+        return $this->hasAnyRole([UserRole::ADMIN->value, UserRole::RESEARCH_DIRECTOR->value]);
     }
 
     /**
-     * Whether the user runs the office's programmes: office members, the research director who leads the
-     * office, and the administrator. Deans oversee their school's projects, not the office.
+     * Whether the user is a dean of school.
+     */
+    public function isDean(): bool
+    {
+        return $this->hasRole(UserRole::DEAN->value);
+    }
+
+    /**
+     * The school a dean is limited to, or null when the user sees every school.
+     * A dean with no school assigned yet is limited to nothing (school id 0), never to everything.
+     */
+    public function oversightSchoolId(): ?int
+    {
+        if (! $this->isDean() || $this->hasUniversityWideAccess()) {
+            return null;
+        }
+
+        return $this->school_id ?? 0;
+    }
+
+    /**
+     * Whether a dean (or wider overseer) may act on research from the given school.
+     */
+    public function oversees(?int $schoolId): bool
+    {
+        if ($this->hasUniversityWideAccess()) {
+            return true;
+        }
+
+        return $this->isDean() && $this->school_id !== null && $this->school_id === $schoolId;
+    }
+
+    /**
+     * Whether the user holds the repository librarian role.
+     */
+    public function isLibrarian(): bool
+    {
+        return $this->hasRole(UserRole::LIBRARIAN->value);
+    }
+
+    /**
+     * Whether the user may open the repository of uploaded files with their summaries: librarians and
+     * senior staff, the research director and admin, and deans for their own school.
+     */
+    public function canBrowseRepository(): bool
+    {
+        return $this->isLibrarian() || $this->hasOversight();
+    }
+
+    /**
+     * Whether the user runs the Research Office's programmes (challenge, events, sites, thematic areas):
+     * the research director who leads the office, and the administrator.
      */
     public function managesResearchOffice(): bool
     {
-        return $this->isResearchOfficer() || $this->hasAnyRole([
+        return $this->hasAnyRole([
             UserRole::RESEARCH_DIRECTOR->value,
             UserRole::ADMIN->value,
         ]);
+    }
+
+    /**
+     * Whether the user may sign in to the staff workspace (lecturer portal or repository workspace).
+     */
+    public function usesStaffWorkspace(): bool
+    {
+        return $this->isFaculty() || $this->isLibrarian();
+    }
+
+    /**
+     * Name of the staff workspace shown in its header.
+     */
+    public function workspaceLabel(): string
+    {
+        return $this->isFaculty() ? 'Lecturer portal' : 'Repository workspace';
     }
 
     /**
@@ -253,7 +333,7 @@ class User extends Authenticatable implements FilamentUser
     public function canAccessPanel(Panel $panel): bool
     {
         if ($panel->getId() === 'supervisor') {
-            return ! $this->isDeactivated() && ($this->isFaculty() || $this->isResearchOfficer());
+            return ! $this->isDeactivated() && $this->usesStaffWorkspace();
         }
 
         return false;

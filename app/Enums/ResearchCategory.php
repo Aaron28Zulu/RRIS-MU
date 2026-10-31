@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Enums;
 
+use App\Models\School;
+
 /**
  * Subject (discipline) of a catalogued study, grouped by the school that teaches it.
  */
@@ -16,6 +18,7 @@ enum ResearchCategory: string
     case ECONOMICS = 'economics';
     case EDUCATION = 'education';
     case HEALTH_SCIENCES = 'health_sciences';
+    case NURSING_MIDWIFERY = 'nursing_midwifery';
     case COMPUTING = 'computing';
     case ENGINEERING = 'engineering';
     case NATURAL_SCIENCES = 'natural_sciences';
@@ -32,6 +35,7 @@ enum ResearchCategory: string
             self::ECONOMICS => 'Economics',
             self::EDUCATION => 'Education',
             self::HEALTH_SCIENCES => 'Health Sciences',
+            self::NURSING_MIDWIFERY => 'Nursing & Midwifery',
             self::COMPUTING => 'Computing & Information Systems',
             self::ENGINEERING => 'Engineering',
             self::NATURAL_SCIENCES => 'Mathematics & Natural Sciences',
@@ -53,6 +57,7 @@ enum ResearchCategory: string
             self::ECONOMICS => 'Economics',
             self::EDUCATION => 'Education',
             self::HEALTH_SCIENCES => 'Health',
+            self::NURSING_MIDWIFERY => 'Nursing',
             self::COMPUTING => 'Computing',
             self::ENGINEERING => 'Engineering',
             self::NATURAL_SCIENCES => 'Sciences',
@@ -73,7 +78,8 @@ enum ResearchCategory: string
             self::ACCOUNTING_FINANCE => 'Financial reporting, auditing, banking and public finance.',
             self::ECONOMICS => 'Development, labour, trade and applied economic analysis.',
             self::EDUCATION => 'Teaching and learning, curriculum, inclusion and school leadership.',
-            self::HEALTH_SCIENCES => 'Public health, nursing, clinical practice and health systems.',
+            self::HEALTH_SCIENCES => 'Public health, clinical medicine, pharmacy and health systems.',
+            self::NURSING_MIDWIFERY => 'Nursing practice, midwifery, maternal and child health.',
             self::COMPUTING => 'Software, data, networks and digital services.',
             self::ENGINEERING => 'Civil, electrical, mechanical and renewable energy systems.',
             self::NATURAL_SCIENCES => 'Mathematics, statistics, physics, chemistry and biology.',
@@ -83,18 +89,28 @@ enum ResearchCategory: string
     }
 
     /**
-     * School of the university that the subject belongs to.
+     * Slug of the school that teaches the subject (see School::DIRECTORY).
+     */
+    public function schoolSlug(): string
+    {
+        return match ($this) {
+            self::AGRICULTURE, self::ENVIRONMENTAL_SCIENCE => 'agriculture-natural-resources',
+            self::BUSINESS_MANAGEMENT, self::ACCOUNTING_FINANCE, self::ECONOMICS => 'business-studies',
+            self::COMPUTING, self::ENGINEERING => 'engineering-technology',
+            self::NATURAL_SCIENCES => 'natural-applied-sciences',
+            self::SOCIAL_SCIENCES, self::PUBLIC_ADMINISTRATION => 'social-sciences',
+            self::EDUCATION => 'education',
+            self::NURSING_MIDWIFERY => 'nursing-midwifery',
+            self::HEALTH_SCIENCES => 'medicine-health-sciences',
+        };
+    }
+
+    /**
+     * School of the university that the subject belongs to, without the "School of" prefix.
      */
     public function school(): string
     {
-        return match ($this) {
-            self::AGRICULTURE, self::ENVIRONMENTAL_SCIENCE => 'Agriculture & Natural Resources',
-            self::BUSINESS_MANAGEMENT, self::ACCOUNTING_FINANCE, self::ECONOMICS => 'Business Studies',
-            self::EDUCATION => 'Education',
-            self::HEALTH_SCIENCES => 'Medicine & Health Sciences',
-            self::COMPUTING, self::ENGINEERING, self::NATURAL_SCIENCES => 'Science, Engineering & Technology',
-            self::SOCIAL_SCIENCES, self::PUBLIC_ADMINISTRATION => 'Social Sciences',
-        };
+        return (string) str(School::DIRECTORY[$this->schoolSlug()])->after('School of ');
     }
 
     /**
@@ -102,12 +118,12 @@ enum ResearchCategory: string
      */
     public function color(): string
     {
-        return match ($this->school()) {
-            'Agriculture & Natural Resources' => 'success',
-            'Business Studies' => 'warning',
-            'Medicine & Health Sciences' => 'danger',
-            'Science, Engineering & Technology' => 'info',
-            'Education' => 'primary',
+        return match ($this->schoolSlug()) {
+            'agriculture-natural-resources' => 'success',
+            'business-studies' => 'warning',
+            'medicine-health-sciences', 'nursing-midwifery' => 'danger',
+            'engineering-technology', 'natural-applied-sciences' => 'info',
+            'education' => 'primary',
             default => 'gray',
         };
     }

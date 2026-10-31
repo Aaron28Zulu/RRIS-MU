@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Http\Middleware;
 
-use App\Enums\UserRole;
 use Filament\Facades\Filament;
 use Filament\Http\Middleware\Authenticate as FilamentAuthenticate;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -33,15 +32,10 @@ class EnsureUserIsSupervisor extends FilamentAuthenticate
 
         $user = $guard->user();
 
-        // Enforce supervisor role clearance
-        if (! $user->hasRole(UserRole::SUPERVISOR->value) && ! $user->hasAnyRole([
-            UserRole::ADMIN->value,
-            UserRole::DEAN->value,
-            UserRole::RESEARCH_DIRECTOR->value,
-            UserRole::RESEARCH_OFFICER->value,
-        ])) {
+        // Lecturer portal staff and repository librarians only
+        if (! $user->usesStaffWorkspace()) {
             throw new HttpResponseException(
-                redirect('/')->with('error', 'Access restricted to authorized academic supervisors.')
+                redirect('/')->with('error', 'Access restricted to authorized academic staff.')
             );
         }
     }

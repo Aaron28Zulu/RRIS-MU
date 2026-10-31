@@ -23,7 +23,7 @@ class ResearchOfficeStatsWidget extends BaseWidget
 {
     protected static ?int $sort = 0;
 
-    protected ?string $heading = 'Research & Innovation Office';
+    protected ?string $heading = 'Research Office';
 
     public static function canView(): bool
     {

@@ -66,18 +66,18 @@ RRIS is designed as a modular monolith using **Laravel 11**, **Filament v3**, an
   * **Audit Trails:** Automatic event logging for document downloads, status transitions, and grade submissions.
 
 #### Who can do what
-Each account has one primary role (shown beside the name) and may hold extra duties, for example a student who also serves on the Research & Innovation Office. Roles grant only what the job needs:
+Each account has one primary role (shown beside the name) and may hold extra duties, for example a senior lecturer who also holds the Repository Librarian role. Roles grant only what the job needs:
 
 | Role | Can do |
 | --- | --- |
 | Student / Student Researcher | Student portal: their own proposal, milestones and downloads. Can edit a study only while it is still under way. |
 | Academic Supervisor | Lecturer portal: reviews, grades and downloads only the students assigned to them; scores challenge entries. |
-| Dean of School | Oversees and grades every project in the register and can remove projects. Does not run the office programmes. |
-| Director of Research | Project oversight plus the Research & Innovation Office programmes. |
-| Research & Innovation Office | Office workspace: the challenge, events, research sites and thematic areas. No access to manuscripts or grading. |
+| Dean of School | Linked to one of the eight schools when the account is created. Sees, grades, downloads and removes only that school's projects, and sees only its research gaps and students. Does not run the Research Office programmes. |
+| Director of Research | University-wide: every school's projects, gaps and students, a school-by-school comparison, and every manuscript. Leads the Research Office (challenge, events, research sites, thematic areas). Does not grade, edit or remove research. |
+| Repository Librarian | Repository workspace: every uploaded manuscript with its summary, gaps and citation, and downloads for cataloguing or publication. Cannot grade or edit research. Can be given to senior staff as an extra duty. |
 | System Administrator | Users (add, set roles, deactivate, remove, sign in as), plus project oversight and the office programmes. Uses the student portal only by signing in as a student. |
 
-Thematic areas belong to the Research & Innovation Office because they shape the research agenda; the administrator can also manage them. Accounts that authored, graded or recorded research cannot be removed, only deactivated, so the archive never loses records. Signing in as another user is logged, shows a banner on every page, and is not allowed for other administrators.
+Thematic areas belong to the Research Office because they shape the research agenda; the administrator can also manage them. Accounts that authored, graded or recorded research cannot be removed, only deactivated, so the archive never loses records. Signing in as another user is logged, shows a banner on every page, and is not allowed for other administrators.
 
 ---
 
@@ -205,9 +205,11 @@ The seeders create these key accounts (plus more supervisors and researchers for
 | Role | Name | Email | What to try |
 | --- | --- | --- | --- |
 | Admin | Admin User | `admin@rris.mu.ac.zm` | Administration → Users: add people, set roles, deactivate or remove accounts, and "Sign in as" anyone who is not an admin |
-| Dean | Dr. M. Phiri | `dean@rris.mu.ac.zm` | School-wide oversight in the lecturer portal |
+| Dean | Dr. M. Phiri | `dean@rris.mu.ac.zm` | School of Business Studies only: its projects, gaps and students |
+| Dean | Prof. K. Lungu | `dean.agriculture@rris.mu.ac.zm` | School of Agriculture and Natural Resources only |
+| Research Director | Prof. E. Banda | `director@rris.mu.ac.zm` | Schools overview across the university and the Research Office: challenge, events, research sites and thematic areas |
+| Librarian | Mrs. G. Chileshe | `librarian@rris.mu.ac.zm` | Repository → Uploaded research: every uploaded file with its summary, ready to download |
 | Lecturer (supervisor) | Dr. C. Mulenga | `cmulenga@rris.mu.ac.zm` | Reviews advisees, runs originality checks and records rubric decisions |
-| Research Office | Ethel Kunda | `ethel@rris.mu.ac.zm` | Office workspace: the Vision 2030 challenge, events, research sites and thematic areas |
 | Student | Kelvin Mwape | `kelvin@rris.mu.ac.zm` | Student workspace: proposal, milestone uploads and feedback |
 | Researcher | Lukundo Bwalya | `lukundo@rris.mu.ac.zm` | Searches the archive and saves records to a folder |
 

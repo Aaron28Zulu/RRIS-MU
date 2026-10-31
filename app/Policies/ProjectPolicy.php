@@ -30,7 +30,8 @@ class ProjectPolicy
     /**
      * Determine whether the user can download the full research document or raw datasets.
      * Strict Rule:
-     * - Admin, Dean, or Research Director can download all documents.
+     * - The administrator, the research director and repository librarians can download every document.
+     * - A dean can download documents from their own school only.
      * - Assigned supervisor can download documents for their assigned projects.
      * - The student author can download their own documents.
      * - Ordinary students, peers, or unauthenticated guests are STRICTLY DENIED.
@@ -41,12 +42,11 @@ class ProjectPolicy
             return false;
         }
 
-        // Higher administrative and deanery clearances
-        if ($user->hasAnyRole([
-            UserRole::ADMIN->value,
-            UserRole::DEAN->value,
-            UserRole::RESEARCH_DIRECTOR->value,
-        ])) {
+        if ($user->hasUniversityWideAccess() || $user->isLibrarian()) {
+            return true;
+        }
+
+        if ($user->oversees($project->school_id)) {
             return true;
         }
 
@@ -56,11 +56,7 @@ class ProjectPolicy
         }
 
         // Student owner of this project
-        if ($project->student_id === $user->id) {
-            return true;
-        }
-
-        return false;
+        return $project->student_id === $user->id;
     }
 
     /**
@@ -87,7 +83,7 @@ class ProjectPolicy
      */
     public function update(User $user, Project $project): bool
     {
-        if ($user->hasAnyRole([UserRole::ADMIN->value, UserRole::DEAN->value])) {
+        if ($this->governs($user, $project)) {
             return true;
         }
 
@@ -104,7 +100,7 @@ class ProjectPolicy
      */
     public function evaluate(User $user, Project $project): bool
     {
-        if ($user->hasAnyRole([UserRole::ADMIN->value, UserRole::DEAN->value])) {
+        if ($this->governs($user, $project)) {
             return true;
         }
 
@@ -116,6 +112,27 @@ class ProjectPolicy
      */
     public function delete(User $user, Project $project): bool
     {
-        return $user->hasAnyRole([UserRole::ADMIN->value, UserRole::DEAN->value]);
+        return $this->governs($user, $project);
+    }
+
+    /**
+     * Bulk removal from the register: the administrator, or a dean (whose register shows only their school).
+     */
+    public function deleteAny(User $user): bool
+    {
+        return $user->isAdmin() || $user->isDean();
+    }
+
+    /**
+     * Academic authority over a project: the administrator anywhere, a dean within their own school.
+     * The research director oversees and reads but does not grade, edit or remove research.
+     */
+    protected function governs(User $user, Project $project): bool
+    {
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $user->isDean() && $user->school_id !== null && $user->school_id === $project->school_id;
     }
 }

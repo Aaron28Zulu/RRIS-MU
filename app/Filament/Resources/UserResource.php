@@ -7,6 +7,7 @@ namespace App\Filament\Resources;
 use App\Enums\UserRole;
 use App\Filament\Resources\UserResource\Pages;
 use App\Http\Controllers\Auth\ImpersonationController;
+use App\Models\School;
 use App\Models\User;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Grid;
@@ -26,6 +27,7 @@ use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Staff and student accounts: the administrator adds people, sets their roles, deactivates or removes
@@ -102,15 +104,27 @@ class UserResource extends Resource
                     // The administrator cannot demote themselves and lock the system out.
                     ->disabled(fn (?User $record): bool => $record?->is(auth()->user()) ?? false)
                     ->columnSpanFull(),
+                Select::make('school_id')
+                    ->label('School')
+                    ->options(fn (): array => School::options())
+                    ->searchable()
+                    ->live()
+                    ->placeholder('Not linked to a school')
+                    ->required(fn (Get $get): bool => static::needsSchool($get('role'), $get('additional_roles')))
+                    ->helperText(fn (Get $get): string => static::needsSchool($get('role'), $get('additional_roles'))
+                        ? 'Required for a dean: they will see only this school\'s research, gaps and students.'
+                        : 'The school the person studies or teaches in. Their research is filed under it.')
+                    ->columnSpanFull(),
                 CheckboxList::make('additional_roles')
                     ->label('Additional duties')
-                    ->helperText('Give only what the person needs, for example a student who also serves on the Research & Innovation Office.')
+                    ->helperText('Give only what the person needs, for example a senior lecturer who also needs the Repository Librarian role to download files for publishing.')
                     ->options(fn (Get $get): array => collect(UserRole::cases())
                         ->reject(fn (UserRole $role): bool => $role->value === $get('role'))
                         ->mapWithKeys(fn (UserRole $role): array => [$role->value => $role->label()])
                         ->all())
                     ->descriptions(collect(UserRole::cases())->mapWithKeys(fn (UserRole $role): array => [$role->value => $role->description()])->all())
                     ->disabled(fn (?User $record): bool => $record?->is(auth()->user()) ?? false)
+                    ->live()
                     ->columns(2)
                     ->columnSpanFull(),
             ]),
@@ -120,7 +134,7 @@ class UserResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with('roles'))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->with(['roles', 'school']))
             ->columns([
                 TextColumn::make('name')
                     ->searchable(['name', 'email'])
@@ -143,7 +157,13 @@ class UserResource extends Resource
                     ->badge()
                     ->color('warning')
                     ->placeholder('None'),
-                TextColumn::make('department')->searchable()->placeholder('Not set')->toggleable(),
+                TextColumn::make('school.name')
+                    ->label('School')
+                    ->formatStateUsing(fn (string $state): string => (string) str($state)->after('School of '))
+                    ->placeholder('Not set')
+                    ->sortable()
+                    ->toggleable(),
+                TextColumn::make('department')->searchable()->placeholder('Not set')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('deactivated_at')
                     ->label('Status')
                     ->badge()
@@ -159,6 +179,9 @@ class UserResource extends Resource
                     ->query(fn (Builder $query, array $data): Builder => filled($data['value'])
                         ? $query->whereHas('roles', fn (Builder $roles) => $roles->where('name', $data['value']))
                         : $query),
+                SelectFilter::make('school_id')
+                    ->label('School')
+                    ->options(fn (): array => School::options()),
                 TernaryFilter::make('active')
                     ->label('Status')
                     ->trueLabel('Active')
@@ -225,7 +248,12 @@ class UserResource extends Resource
         $user = $record ?? new User;
         $isSelf = $record?->is(auth()->user()) ?? false;
 
-        $user->fill(collect($data)->only(['name', 'email', 'department'])->all());
+        // A dean without a school would see nothing; refuse it rather than create a dead account.
+        if (! $isSelf && static::needsSchool($data['role'] ?? null, $data['additional_roles'] ?? []) && blank($data['school_id'] ?? null)) {
+            throw ValidationException::withMessages(['school_id' => 'Choose the school this dean leads.']);
+        }
+
+        $user->fill(collect($data)->only(['name', 'email', 'department', 'school_id'])->all());
 
         // The model's hashed cast stores it securely.
         if (filled($data['password'] ?? null)) {
@@ -241,6 +269,17 @@ class UserResource extends Resource
         }
 
         return $user;
+    }
+
+    /**
+     * Deans must be linked to a school, whether dean is their main role or an additional duty.
+     *
+     * @param  array<int, string>|null  $additionalRoles
+     */
+    public static function needsSchool(?string $role, ?array $additionalRoles): bool
+    {
+        return collect([$role, ...($additionalRoles ?? [])])
+            ->contains(fn (?string $value): bool => UserRole::tryFrom((string) $value)?->requiresSchool() ?? false);
     }
 
     public static function getPages(): array

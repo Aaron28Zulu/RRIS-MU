@@ -9,6 +9,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Database\Eloquent\Builder;
 
 class EmergingGapsTable extends BaseWidget
 {
@@ -24,6 +25,8 @@ class EmergingGapsTable extends BaseWidget
             ->query(
                 ResearchGap::query()
                     ->where('is_emerging', true)
+                    // A dean sees only gaps from their own school's studies.
+                    ->whereHas('project', fn (Builder $projects) => $projects->withinOversightOf(auth()->user()))
                     ->with([
                         'domain:id,name,slug',
                         'project:id,title,category,completion_year',

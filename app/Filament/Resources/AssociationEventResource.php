@@ -39,7 +39,7 @@ class AssociationEventResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-megaphone';
 
-    protected static ?string $navigationGroup = 'Research & Innovation Office';
+    protected static ?string $navigationGroup = 'Research Office';
 
     protected static ?string $navigationLabel = 'Debates & events';
 
@@ -72,8 +72,8 @@ class AssociationEventResource extends Resource
                 TextInput::make('venue')->maxLength(255),
                 Select::make('coordinator_id')
                     ->label('Coordinator')
-                    ->options(fn (): array => User::role(UserRole::RESEARCH_OFFICER->value)->pluck('name', 'id')->all())
-                    ->default(fn (): ?int => auth()->user()?->isResearchOfficer() ? auth()->id() : null)
+                    ->options(fn (): array => User::role(UserRole::RESEARCH_DIRECTOR->value)->pluck('name', 'id')->all())
+                    ->default(fn (): ?int => auth()->user()?->hasRole(UserRole::RESEARCH_DIRECTOR->value) ? auth()->id() : null)
                     ->searchable(),
                 TextInput::make('capacity')->label('Seats')->numeric()->minValue(1)->helperText('Leave empty for no limit.'),
                 TextInput::make('speaker_slots')

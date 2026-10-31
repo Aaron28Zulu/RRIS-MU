@@ -9,8 +9,10 @@ use App\Filament\Resources\AssociationEventResource;
 use App\Filament\Resources\ChallengeEntryResource;
 use App\Filament\Resources\InnovationChallengeResource;
 use App\Filament\Resources\ProjectResource;
+use App\Filament\Resources\RepositoryResource;
 use App\Filament\Resources\ResearchDomainResource;
 use App\Filament\Resources\ResearchSiteResource;
+use App\Filament\Resources\SchoolStudentResource;
 use App\Filament\Resources\UserResource;
 use App\Filament\Supervisor\Pages\Dashboard;
 use App\Filament\Supervisor\Resources\SupervisorProjectResource;
@@ -19,6 +21,7 @@ use App\Filament\Supervisor\Widgets\SupervisorStatsOverviewWidget;
 use App\Filament\Widgets\EmergingGapsTable;
 use App\Filament\Widgets\ResearchOfficeStatsWidget;
 use App\Filament\Widgets\SaturatedDomainsChart;
+use App\Filament\Widgets\SchoolsOverviewTable;
 use App\Http\Middleware\EnsureAccountIsActive;
 use App\Http\Middleware\EnsureUserIsSupervisor;
 use Filament\FontProviders\GoogleFontProvider;
@@ -45,7 +48,7 @@ use Illuminate\View\View;
 class SupervisorPanelProvider extends PanelProvider
 {
     /**
-     * Configure the lecturer portal (supervisors, deans, research directors and admins).
+     * Configure the staff workspace: the lecturer portal (supervisors, deans, the research director and admins) and the repository workspace for librarians.
      */
     public function panel(Panel $panel): Panel
     {
@@ -100,9 +103,10 @@ class SupervisorPanelProvider extends PanelProvider
             ->databaseNotificationsPolling('60s')
             ->navigationGroups([
                 NavigationGroup::make('Supervision'),
-                NavigationGroup::make('Research & Innovation Office'),
+                NavigationGroup::make('Research Office'),
                 NavigationGroup::make('Research intelligence'),
                 NavigationGroup::make('School oversight'),
+                NavigationGroup::make('Repository'),
                 NavigationGroup::make('Archive'),
                 NavigationGroup::make('Administration'),
             ])
@@ -143,6 +147,8 @@ class SupervisorPanelProvider extends PanelProvider
             ->resources([
                 SupervisorProjectResource::class,
                 ProjectResource::class,
+                SchoolStudentResource::class,
+                RepositoryResource::class,
                 InnovationChallengeResource::class,
                 ChallengeEntryResource::class,
                 AssociationEventResource::class,
@@ -155,6 +161,7 @@ class SupervisorPanelProvider extends PanelProvider
             ])
             ->widgets([
                 ResearchOfficeStatsWidget::class,
+                SchoolsOverviewTable::class,
                 SupervisorStatsOverviewWidget::class,
                 ReviewQueueWidget::class,
                 SaturatedDomainsChart::class,

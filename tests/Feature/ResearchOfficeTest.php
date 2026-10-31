@@ -51,8 +51,8 @@ class ResearchOfficeTest extends TestCase
         $this->student = $this->makeUser('Kelvin Mwape', UserRole::STUDENT);
         $this->supervisor = $this->makeUser('Dr. C. Mulenga', UserRole::SUPERVISOR);
 
-        // Office staff hold the office role only; students who serve on the office are set up where a test needs one.
-        $this->officer = $this->makeUser('Ethel Kunda', UserRole::RESEARCH_OFFICER);
+        // The research director leads the Research Office and runs its programmes.
+        $this->officer = $this->makeUser('Prof. E. Banda', UserRole::RESEARCH_DIRECTOR);
     }
 
     protected function makeUser(string $name, UserRole $role): User
@@ -207,11 +207,11 @@ class ResearchOfficeTest extends TestCase
         $this->assertSame(15.0, $entry->fresh()->panelScore());
     }
 
-    public function test_students_cannot_score_their_own_entry_even_as_office_members(): void
+    public function test_students_cannot_score_their_own_entry_even_with_panel_duties(): void
     {
-        // A student researcher who also serves on the office.
+        // A student researcher who also tutors, so sits on the review panel.
         $member = $this->makeUser('Peter Mwaba', UserRole::RESEARCHER);
-        $member->assignRole(UserRole::RESEARCH_OFFICER->value);
+        $member->assignRole(UserRole::SUPERVISOR->value);
 
         $challenge = $this->makeChallenge(ChallengeStatus::REVIEWING);
         $entry = $challenge->entries()->create([
@@ -270,15 +270,26 @@ class ResearchOfficeTest extends TestCase
         $this->get('/supervisor/innovation-challenges')->assertForbidden();
     }
 
-    public function test_office_members_reach_the_office_workspace_but_not_supervision(): void
+    public function test_research_director_runs_the_research_office(): void
     {
         $this->actingAs($this->officer);
 
-        $this->get('/supervisor')->assertOk()->assertSee('Research &amp; Innovation Office', false);
+        $this->get('/supervisor')->assertOk()->assertSee('Research Office');
         $this->get('/supervisor/innovation-challenges')->assertOk();
         $this->get('/supervisor/association-events')->assertOk();
         $this->get('/supervisor/research-sites')->assertOk();
-        $this->get('/supervisor/supervisor-projects')->assertForbidden();
+        $this->get('/supervisor/research-domains')->assertOk();
+    }
+
+    public function test_deans_and_supervisors_do_not_run_the_research_office(): void
+    {
+        $dean = $this->makeUser('Dr. M. Phiri', UserRole::DEAN);
+
+        foreach ([$dean, $this->supervisor] as $user) {
+            $this->actingAs($user);
+            $this->get('/supervisor/innovation-challenges')->assertForbidden();
+            $this->get('/supervisor/research-sites')->assertForbidden();
+        }
     }
 
     public function test_ordinary_students_cannot_open_the_office_workspace(): void
