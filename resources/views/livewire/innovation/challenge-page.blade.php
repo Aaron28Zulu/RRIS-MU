@@ -8,7 +8,7 @@
             </nav>
             <div class="mt-4 flex flex-wrap items-center gap-3">
                 <x-pill :color="$challenge->status->color()">{{ $challenge->status->label() }}</x-pill>
-                <span class="text-sm text-muted">Vision 2030 Research &amp; Innovation Challenge &middot; {{ $challenge->edition }}</span>
+                <span class="text-sm text-muted">Research &amp; Innovation Challenge &middot; {{ $challenge->edition }}</span>
             </div>
             <h1 class="record-title mt-3 text-2xl sm:text-4xl">{{ $challenge->title }}</h1>
             @if ($challenge->theme)
@@ -126,7 +126,7 @@
                         </div>
                         <div>
                             <label for="expected_impact" class="field-label">Expected impact <span class="text-red-700">*</span></label>
-                            <textarea id="expected_impact" wire:model="expected_impact" rows="3" class="field leading-relaxed" placeholder="How does this support Vision 2030 and national development?"></textarea>
+                            <textarea id="expected_impact" wire:model="expected_impact" rows="3" class="field leading-relaxed" placeholder="How does this contribute to national development?"></textarea>
                             @error('expected_impact') <p class="field-error">{{ $message }}</p> @enderror
                         </div>
 

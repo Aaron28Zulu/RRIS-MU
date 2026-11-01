@@ -66,7 +66,7 @@ class ResearchOfficeTest extends TestCase
     protected function makeChallenge(ChallengeStatus $status = ChallengeStatus::OPEN): InnovationChallenge
     {
         return InnovationChallenge::create([
-            'title' => 'Mulungushi University Vision 2030 Research and Innovation Challenge',
+            'title' => 'Mulungushi University Research and Innovation Challenge',
             'edition' => 'Semester 1, 2026/27',
             'description' => 'Call for research proposals and innovative project ideas.',
             'status' => $status,
@@ -103,7 +103,7 @@ class ResearchOfficeTest extends TestCase
 
         $this->get(route('innovation'))
             ->assertOk()
-            ->assertSee('Vision 2030 Research &amp; Innovation Challenge', false)
+            ->assertSee('Research &amp; Innovation Challenge', false)
             ->assertSee('Semester 1, 2026/27')
             ->assertDontSee('Unannounced draft call')
             ->assertSee('Inter-School Research Debate')
@@ -304,7 +304,7 @@ class ResearchOfficeTest extends TestCase
 
         Livewire::test(ManageInnovationChallenges::class)
             ->callAction('create', [
-                'title' => 'Mulungushi University Vision 2030 Research and Innovation Challenge',
+                'title' => 'Mulungushi University Research and Innovation Challenge',
                 'edition' => 'Semester 2, 2026/27',
                 'description' => 'Second call of the year.',
                 'status' => ChallengeStatus::OPEN->value,

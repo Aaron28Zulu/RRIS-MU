@@ -13,10 +13,10 @@
                 <span class="font-serif font-semibold text-forest-800">and knowledge sharing.</span>
             </h1>
             <p class="mt-4 max-w-2xl text-ink-soft">
-                Enter the Vision 2030 Research and Innovation Challenge, sign up for debates and workshops, and log data at research sites across the university's schools.
+                Enter the Research and Innovation Challenge, sign up for debates and workshops, and log data at research sites across the university's schools.
             </p>
             <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                <a href="#challenge" class="btn-primary">Vision 2030 Challenge</a>
+                <a href="#challenge" class="btn-primary">Innovation Challenge</a>
                 <a href="#events" class="btn-secondary">Debates &amp; workshops</a>
                 <a href="#sites" class="btn-secondary">Research sites</a>
             </div>
@@ -24,11 +24,11 @@
     </section>
 
     <div class="container-page space-y-12 py-8 sm:space-y-16 sm:py-12">
-        {{-- Vision 2030 Research and Innovation Challenge --}}
+        {{-- Research and Innovation Challenge --}}
         <section id="challenge" class="scroll-mt-24">
             <div class="flex flex-wrap items-end justify-between gap-4">
                 <div>
-                    <h2 class="text-xl font-bold tracking-tight sm:text-2xl">Vision 2030 Research &amp; Innovation Challenge</h2>
+                    <h2 class="text-xl font-bold tracking-tight sm:text-2xl">Research &amp; Innovation Challenge</h2>
                     <p class="mt-2 max-w-2xl text-ink-soft">A once-a-semester call for research proposals and innovative project ideas. A review panel scores every entry, shortlisted teams present, and selected projects get guidance from the office and are published with the university.</p>
                 </div>
             </div>

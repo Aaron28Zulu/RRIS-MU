@@ -170,7 +170,7 @@
             <div class="max-w-2xl">
                 <p class="eyebrow text-forest-300">Office of Research and Innovation</p>
                 <h2 class="mt-3 text-xl font-bold tracking-tight text-white sm:text-2xl">Take your idea further than the archive.</h2>
-                <p class="mt-2 leading-relaxed">Enter the Vision 2030 Research and Innovation Challenge, join debates and workshops, and log data at research sites run across the university's schools.</p>
+                <p class="mt-2 leading-relaxed">Enter the Research and Innovation Challenge, join debates and workshops, and log data at research sites run across the university's schools.</p>
             </div>
             <a href="{{ route('innovation') }}" class="btn shrink-0 bg-white text-forest-900 hover:bg-forest-50">Research &amp; Innovation <x-glyph name="arrow-right" class="h-4 w-4" /></a>
         </div>

@@ -18,7 +18,7 @@ class EntryReview extends Model
      * @var array<string, string>
      */
     public const CRITERIA = [
-        'relevance_score' => 'Relevance to Vision 2030 and national development',
+        'relevance_score' => 'Relevance to national development',
         'innovation_score' => 'Originality and innovation',
         'feasibility_score' => 'Feasibility with available resources',
         'impact_score' => 'Expected impact',

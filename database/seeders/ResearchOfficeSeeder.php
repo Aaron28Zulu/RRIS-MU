@@ -23,7 +23,7 @@ use Spatie\Permission\Models\Role;
 
 /**
  * Seeds the Office of Research and Innovation's semester work plan: the RRIS launch workshop,
- * the inter-school debate, the Vision 2030 challenge and research sites run by several schools.
+ * the inter-school debate, the Research and Innovation Challenge and research sites run by several schools.
  */
 class ResearchOfficeSeeder extends Seeder
 {
@@ -84,9 +84,9 @@ class ResearchOfficeSeeder extends Seeder
         }
 
         $challenge = InnovationChallenge::updateOrCreate(['edition' => 'Semester 1, 2026/27'], [
-            'title' => 'Mulungushi University Vision 2030 Research and Innovation Challenge',
+            'title' => 'Mulungushi University Research and Innovation Challenge',
             'theme' => 'Research, Innovation and Knowledge Sharing for National Development',
-            'description' => "The Office of Research and Innovation invites research proposals and innovative project ideas from every school that support Zambia's Vision 2030 and contribute to national development.\n\nA review panel evaluates every submission. Shortlisted projects present to the panel, outstanding proposals are recognised, and selected projects receive support and guidance from the office and are published in collaboration with the university.",
+            'description' => "The Office of Research and Innovation invites research proposals and innovative project ideas from every school that contribute to national development.\n\nA review panel evaluates every submission. Shortlisted projects present to the panel, outstanding proposals are recognised, and selected projects receive support and guidance from the office and are published in collaboration with the university.",
             'criteria' => 'Open to all registered students of Mulungushi University, individually or in teams of up to four.',
             'status' => ChallengeStatus::OPEN,
             'opens_on' => now()->subWeek()->toDateString(),

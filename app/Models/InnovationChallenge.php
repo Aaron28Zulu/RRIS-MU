@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * A semester call of the university-wide Vision 2030 Research and Innovation Challenge.
+ * A semester call of the university-wide Research and Innovation Challenge.
  */
 class InnovationChallenge extends Model
 {

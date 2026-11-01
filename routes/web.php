@@ -29,7 +29,7 @@ Route::get('/repository', PublicRepository::class)->name('repository');
 Route::get('/repository/{project}', ResearchRecord::class)->name('repository.show');
 Route::get('/research-gaps', ResearchGapExplorer::class)->name('gaps');
 
-// Office of Research and Innovation: Vision 2030 challenge, debates and workshops, research sites
+// Office of Research and Innovation: research and innovation challenge, debates and workshops, research sites
 Route::get('/innovation', InnovationHub::class)->name('innovation');
 Route::get('/innovation/challenges/{challenge}', ChallengePage::class)->name('innovation.challenge');
 Route::get('/innovation/events/{event}', EventPage::class)->name('innovation.event');
